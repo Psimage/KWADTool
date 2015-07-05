@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Psimage/KWADTool.svg)](https://travis-ci.org/Psimage/KWADTool)
+
 # KWADTool
 A tool to work with Invisible Inc. KWAD files
 
