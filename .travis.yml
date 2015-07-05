@@ -2,4 +2,4 @@ language: csharp
 solution: KWADTool.sln
 
 script:
-  - xbuild /p:Configuration=Release;Platform=x86 KWADTool.sln
+  - xbuild /p:Configuration=Release /p:Platform=x86 KWADTool.sln

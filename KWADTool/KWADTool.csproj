@@ -109,17 +109,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Kwad\AliasInfo.cs" />
-    <Compile Include="Kwad\KLEIBlob.cs" />
-    <Compile Include="Kwad\KLEIResource.cs" />
-    <Compile Include="Kwad\KLEISurface.cs" />
-    <Compile Include="Kwad\KLEITexture.cs" />
-    <Compile Include="Kwad\KWAD.cs" />
+    <Compile Include="KWAD\AliasInfo.cs" />
+    <Compile Include="KWAD\KLEIBlob.cs" />
+    <Compile Include="KWAD\KLEIResource.cs" />
+    <Compile Include="KWAD\KLEISurface.cs" />
+    <Compile Include="KWAD\KLEITexture.cs" />
+    <Compile Include="KWAD\KWAD.cs" />
     <Compile Include="CommandLineOptions.cs" />
-    <Compile Include="Kwad\UnexpectedSignatureException.cs" />
+    <Compile Include="KWAD\UnexpectedSignatureException.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Kwad\ResourceInfo.cs" />
+    <Compile Include="KWAD\ResourceInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
