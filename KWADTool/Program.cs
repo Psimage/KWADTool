@@ -21,7 +21,7 @@ namespace KWADTool
                 {
                     if (options.Output == null)
                     {
-                        options.Output = Path.GetFileName(options.Input);
+                        options.Output = Path.GetFileName(options.Input + ".d");
                     }
 
                     KWAD kwad;
