@@ -19,7 +19,7 @@ namespace KWADTool
         [Option('i', "input", Required = true, HelpText = "Input KWAD file.", MetaValue = "<file>")]
         public string Input { get; set; }
 
-        [Option('o', "output", HelpText = "(Default: <kwadFileName>) Output path.", MetaValue = "<path>")]
+        [Option('o', "output", HelpText = "(Default: <kwadFileName>.d) Output directory.", MetaValue = "<dir>")]
         public string Output { get; set; }
 
         [HelpOption]

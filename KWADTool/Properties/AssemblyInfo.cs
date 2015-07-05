@@ -41,4 +41,4 @@ using CommandLine;
     "This is free software. You may redistribute copies of it under the terms of",
     "the MIT License <http://opensource.org/licenses/MIT>.\n")]
 [assembly: AssemblyUsage(
-    "Usage: KWADTool -i <kwadFile> [-e (textures|blobs|all)] [-o <outputPath>]")]
+    "Usage: KWADTool -i <kwadFile> [-e (textures|blobs|all)] [-o <outputDir>]")]
