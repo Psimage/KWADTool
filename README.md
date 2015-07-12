@@ -3,6 +3,9 @@
 # KWADTool
 A tool to work with Invisible Inc. KWAD files
 
+## Requirements
+.NET Framework 4.5
+
 ## Usage
 ```
 KWADTool -i <kwadFile> [-e (textures|blobs|all)] [-o <outputDir>]
