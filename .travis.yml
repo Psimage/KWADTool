@@ -1,6 +1,11 @@
 language: csharp
 solution: KWADTool.sln
 
+addons:
+  apt:
+    packages:
+    - p7zip-full
+
 script:
 - xbuild /p:Configuration=Release KWADTool.sln
 
