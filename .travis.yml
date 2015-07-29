@@ -15,6 +15,7 @@ env:
 before_deploy: 
 - cd ${BUILD_OUTPUT_DIR}
 - 7z a ${ARTIFACT_NAME} *.dll KWADTool.exe KWADTool.exe.config
+- cd -
 deploy:
   provider: releases
   api_key:
