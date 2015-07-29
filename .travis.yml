@@ -12,7 +12,7 @@ script:
 env:
 - BUILD_OUTPUT_DIR="KWADTool/bin/Release" ARTIFACT_NAME="KWADTool-${TRAVIS_TAG}.zip"
 
-before_deploy: "7z a ${ARTIFACT_NAME} ${BUILD_OUTPUT_DIR}/*.dll ${BUILD_OUTPUT_DIR}/KWADTool.exe ${BUILD_OUTPUT_DIR}/KWADTool.exe.config"
+before_deploy: "7z a -w${BUILD_OUTPUT_DIR} ${ARTIFACT_NAME} *.dll KWADTool.exe KWADTool.exe.config"
 deploy:
   provider: releases
   api_key:
