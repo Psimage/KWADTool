@@ -2,11 +2,10 @@ language: csharp
 solution: KWADTool.sln
 
 script:
-- xbuild /p:Configuration=Release /p:Platform=AnyCPU KWADTool.sln
+- xbuild /p:Configuration=Release KWADTool.sln
 
 env:
-- OUTPUT_DIR="KWADTool/bin/Release"
-- ARTIFACT_NAME="KWADTool-${TRAVIS_TAG}.zip"
+- OUTPUT_DIR="KWADTool/bin/Release" ARTIFACT_NAME="KWADTool-${TRAVIS_TAG}.zip"
 
 before_deploy: "7z a ${ARTIFACT_NAME} '${OUTPUT_DIR}/*.dll' '${OUTPUT_DIR}/KWADTool.exe' '${OUTPUT_DIR}/KWADTool.exe.config'"
 deploy:
