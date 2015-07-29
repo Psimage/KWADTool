@@ -2,4 +2,18 @@ language: csharp
 solution: KWADTool.sln
 
 script:
-  - xbuild /p:Configuration=Release /p:Platform=x86 KWADTool.sln
+- xbuild /p:Configuration=Release /p:Platform=AnyCPU KWADTool.sln
+
+env:
+- OUTPUT_DIR="KWADTool/bin/Release"
+- ARTIFACT_NAME="KWADTool-${TRAVIS_TAG}.zip"
+
+before_deploy: "7z a ${ARTIFACT_NAME} '${OUTPUT_DIR}/*.dll' '${OUTPUT_DIR}/KWADTool.exe' '${OUTPUT_DIR}/KWADTool.exe.config'"
+deploy:
+  provider: releases
+  api_key:
+    secure: Arc0d0mLhkQndsRjq7sCOFH6zHnqmk1gJXQ7cpfYUabDlRkuNIkUm6u4MpjHqxNotK2BqeAuJ/Fgc4Q+x73AcQ8B9QHRBpodssnph9ArZDr5S5yTpAvxj2bCX4MksaQPJbq0DCM99pxE//flzt54GAX9xFwtSnQqA1IEXHwBIWdv9iEWohpDbuN/PXA7Iy4BsvknwUA0iOxCUNsz3B/IyMZZiT4DW6k2n5z/w81fwIM6xIjdllMHo45Du/JFQJZbLGa01PcBI9BKgnG5HXeV0V7vF2I5kwV4LbaZoeWXVHDuGj4ZxCvsKr0xpxULlqapjYtIOZn8y++1W/Uz+8DqQNXuBnPeJHHYzrIrm9Oamk1EIhLIldtXYwnC0yjMpv1Pb20pCaLGLy42sEcI+NGTcT7EPPxiVpcaUUGa0IctBnWUKGOcUfaDzwd3cNFPhJ59G3vRaZKqetKu4dwiSjYZQrBZSOxKiqgVDoHCkN4KMQncsrp+YGGFKdl94VEk92LJHcntvNrW0B24RnXRsSgIKCeW2WuS8Re+5gbKpbynRXRLJo+XXvG1QyQsrYrijkm/y4/GfAneMUHTA5t7WR9s4MLW+/y2ScvjueWXD5GbUt6rxQC8Nv8dgWZN3u747yzW8Rn2aHyPk9WZUO2gNphx2XWRqhcB81cO+9FgyneznWE=
+  file: ${ARTIFACT_NAME}
+  skip_cleanup: true
+  on:
+    tags: true
