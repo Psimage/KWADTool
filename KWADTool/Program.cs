@@ -5,7 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Runtime.InteropServices;
-using KWADTool.Kwad;
+using KWADTool.KwadFormat;
 using ManagedSquish;
 
 namespace KWADTool
@@ -84,7 +84,7 @@ namespace KWADTool
         private static void ExtractBlobs(KWAD kwad, string outputPath)
         {
             var namedBlobList = (from aliasInfo in kwad.GetAliasInfoList()
-                                 where kwad.GetResourceInfoList()[(int) aliasInfo.ResourceIdx].GetType().SequenceEqual(KLEIResource.SIGNATURE_KLEI_BLOB_4)
+                                 where kwad.GetResourceInfoList()[(int) aliasInfo.ResourceIdx].GetType().SequenceEqual(KLEIBlob.KLEI_TYPE)
                                  select new {name = aliasInfo.AliasPath.GetString(), blob = kwad.GetResourceAt<KLEIBlob>((int) aliasInfo.ResourceIdx)}).ToList();
 
             Console.WriteLine("Extracting {0} blobs...", namedBlobList.Count);
@@ -112,7 +112,7 @@ namespace KWADTool
         private static void ExtractTextures(KWAD kwad, string outputPath)
         {
             var namedTextureList = (from aliasInfo in kwad.GetAliasInfoList()
-                                    where kwad.GetResourceInfoList()[(int) aliasInfo.ResourceIdx].GetType().SequenceEqual(KLEIResource.SIGNATURE_KLEI_TEXTURE_4)
+                                    where kwad.GetResourceInfoList()[(int) aliasInfo.ResourceIdx].GetType().SequenceEqual(KLEITexture.KLEI_TYPE)
                                     select new {name = aliasInfo.AliasPath.GetString(), texture = kwad.GetResourceAt<KLEITexture>((int) aliasInfo.ResourceIdx)}).ToList();
 
             Console.WriteLine("Extracting {0} textures...", namedTextureList.Count);

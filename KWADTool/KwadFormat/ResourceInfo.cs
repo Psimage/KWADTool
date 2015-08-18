@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace KWADTool.Kwad
+namespace KWADTool.KwadFormat
 {
     public class ResourceInfo
     {

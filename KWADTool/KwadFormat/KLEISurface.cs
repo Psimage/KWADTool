@@ -1,9 +1,12 @@
 ﻿using System.IO;
+using System.Text;
 
-namespace KWADTool.Kwad
+namespace KWADTool.KwadFormat
 {
     public class KLEISurface : KLEIResource
     {
+        public static readonly byte[] KLEI_TYPE = Encoding.ASCII.GetBytes("SRF1"); //WARNING: mutable
+
         public class Mipmap
         {
             public uint Size { get; private set; }

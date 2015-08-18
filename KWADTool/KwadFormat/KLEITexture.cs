@@ -1,9 +1,12 @@
 ﻿using System.IO;
+using System.Text;
 
-namespace KWADTool.Kwad
+namespace KWADTool.KwadFormat
 {
     public class KLEITexture : KLEIResource
     {
+        public static readonly byte[] KLEI_TYPE = Encoding.ASCII.GetBytes("TEX1"); //WARNING: mutable
+
         public class Affine2D
         {
             public float ScaleX { get; private set; }

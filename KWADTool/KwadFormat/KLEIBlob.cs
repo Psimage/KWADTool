@@ -1,9 +1,12 @@
 ﻿using System.IO;
+using System.Text;
 
-namespace KWADTool.Kwad
+namespace KWADTool.KwadFormat
 {
     public class KLEIBlob : KLEIResource
     {
+        public static readonly byte[] KLEI_TYPE = Encoding.ASCII.GetBytes("BLOB"); //WARNING: mutable
+
         private readonly byte[] signature;
 
         public byte[] GetSignature()

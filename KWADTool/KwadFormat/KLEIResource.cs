@@ -3,16 +3,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Reflection;
 
-namespace KWADTool.Kwad
+namespace KWADTool.KwadFormat
 {
-    public class KLEIResource
+    public abstract class KLEIResource
     {
-        public static readonly byte[] SIGNATURE_KLEI_BLOB_4 = Encoding.ASCII.GetBytes("BLOB"); //WARNING: mutable
-        public static readonly byte[] SIGNATURE_KLEI_SURFACE_4 = Encoding.ASCII.GetBytes("SRF1");
-        public static readonly byte[] SIGNATURE_KLEI_TEXTURE_4 = Encoding.ASCII.GetBytes("TEX1");
-
         private class ByteArrayComparer : IEqualityComparer<byte[]>
         {
             public bool Equals(byte[] left, byte[] right)
@@ -34,12 +30,21 @@ namespace KWADTool.Kwad
 
         static KLEIResource()
         {
-            Dictionary<byte[], Type> resTypes = new Dictionary<byte[], Type>(new ByteArrayComparer())
+            Dictionary<byte[], Type> resTypes = new Dictionary<byte[], Type>(new ByteArrayComparer());
+
+            var kleiResourceTypes = from type in Assembly.GetAssembly(typeof (KLEIResource)).GetTypes()
+                                    where type.IsClass && !type.IsAbstract && type.IsSubclassOf(typeof (KLEIResource))
+                                    select type;
+
+            foreach (var type in kleiResourceTypes)
             {
-                {SIGNATURE_KLEI_BLOB_4, typeof (KLEIBlob)},
-                {SIGNATURE_KLEI_SURFACE_4, typeof (KLEISurface)},
-                {SIGNATURE_KLEI_TEXTURE_4, typeof (KLEITexture)}
-            };
+                var fieldInfo = type.GetField("KLEI_TYPE", BindingFlags.Public | BindingFlags.Static);
+                if (fieldInfo == null)
+                {
+                    throw new Exception("Required field \"KLEI_TYPE\" not found in " + type.FullName + " class");
+                }
+                resTypes.Add((byte[]) fieldInfo.GetValue(null), type);
+            }
 
             RESOURCE_TYPES = new ReadOnlyDictionary<byte[], Type>(resTypes);
         }

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace KWADTool.Kwad
+namespace KWADTool.KwadFormat
 {
     public class UnexpectedSignatureException : Exception
     {
