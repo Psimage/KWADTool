@@ -93,7 +93,7 @@ namespace KWADTool
             {
                 Console.WriteLine(namedBlob.name);
 
-                var path = Path.GetFullPath(Path.Combine(outputPath, namedBlob.name));
+                var path = Path.GetFullPath(Path.Combine(outputPath, namedBlob.name.TrimStart(@"\/".ToCharArray())));
 
                 var parentDirectory = Path.GetDirectoryName(path);
                 if (!string.IsNullOrWhiteSpace(parentDirectory))
@@ -151,7 +151,7 @@ namespace KWADTool
 
                             Console.WriteLine("\t{0}", namedTexture.name);
 
-                            var path = Path.GetFullPath(Path.Combine(outputPath, namedTexture.name));
+                            var path = Path.GetFullPath(Path.Combine(outputPath, namedTexture.name.TrimStart(@"\/".ToCharArray())));
 
                             var parentDirectory = Path.GetDirectoryName(path);
                             if (!string.IsNullOrWhiteSpace(parentDirectory))
