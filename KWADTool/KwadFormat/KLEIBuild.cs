@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace KWADTool.KwadFormat
 {
@@ -84,6 +80,7 @@ namespace KWADTool.KwadFormat
             }
         }
 
+        // ReSharper disable once InconsistentNaming
         public class USAffine3D
         {
             public float C1R1 { get; private set; }
