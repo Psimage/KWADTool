@@ -90,6 +90,28 @@ namespace KWADTool.KwadFormat
                 ModelResourceIdx = reader.ReadUInt32();
                 Affine3D = new USAffine3D(reader);
             }
+
+            protected bool Equals(SymbolFrame other)
+            {
+                return ModelResourceIdx == other.ModelResourceIdx && Affine3D.Equals(other.Affine3D);
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                // ReSharper disable once ConvertIfStatementToReturnStatement
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((SymbolFrame) obj);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    return ((int) ModelResourceIdx * 397) ^ Affine3D.GetHashCode();
+                }
+            }
         }
     }
 }
