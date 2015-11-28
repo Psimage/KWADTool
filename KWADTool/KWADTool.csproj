@@ -111,6 +111,7 @@
   <ItemGroup>
     <Compile Include="KwadFormat\AliasInfo.cs" />
     <Compile Include="KwadFormat\EncodedString.cs" />
+    <Compile Include="KwadFormat\KLEIAnimation.cs" />
     <Compile Include="KwadFormat\KLEIBlob.cs" />
     <Compile Include="KwadFormat\KLEIBuild.cs" />
     <Compile Include="KwadFormat\KLEIModel.cs" />
@@ -120,6 +121,7 @@
     <Compile Include="CommandLineOptions.cs" />
     <Compile Include="KwadFormat\KWAD.cs" />
     <Compile Include="KwadFormat\UnexpectedSignatureException.cs" />
+    <Compile Include="KwadFormat\USAffine3D.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="KwadFormat\ResourceInfo.cs" />
