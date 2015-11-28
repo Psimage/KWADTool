@@ -113,6 +113,7 @@
     <Compile Include="KwadFormat\EncodedString.cs" />
     <Compile Include="KwadFormat\KLEIBlob.cs" />
     <Compile Include="KwadFormat\KLEIBuild.cs" />
+    <Compile Include="KwadFormat\KLEIModel.cs" />
     <Compile Include="KwadFormat\KLEIResource.cs" />
     <Compile Include="KwadFormat\KLEISurface.cs" />
     <Compile Include="KwadFormat\KLEITexture.cs" />
