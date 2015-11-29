@@ -14,6 +14,8 @@ namespace KWADTool.KwadFormat
             return (byte[]) signature.Clone();
         }
 
+        public uint StructSize { get; private set; }
+
         public uint TextureResourceIdx { get; private set; }
 
         public KLEIMesh Mesh { get; private set; }
@@ -21,6 +23,7 @@ namespace KWADTool.KwadFormat
         public KLEIModel(BinaryReader reader)
         {
             signature = reader.ReadBytes(8);
+            StructSize = reader.ReadUInt32();
             TextureResourceIdx = reader.ReadUInt32();
             Mesh = new KLEIMesh(reader);
         }
@@ -45,14 +48,14 @@ namespace KWADTool.KwadFormat
             }
 
             private readonly Vertex[] vertices;
-            public int[] GetVertices()
+            public Vertex[] GetVertices()
             {
-                return (int[])vertices.Clone();
+                return (Vertex[])vertices.Clone();
             }
 
             public KLEIMesh(BinaryReader reader)
             {
-                signature = reader.ReadBytes(8);
+                signature = reader.ReadBytes(4);
                 PolygonCount = reader.ReadUInt32();
                 IndexCount = reader.ReadUInt32();
                 VertexCount = reader.ReadUInt32();

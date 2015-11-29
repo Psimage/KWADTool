@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace KWADTool.KwadFormat
@@ -65,7 +66,12 @@ namespace KWADTool.KwadFormat
 
             public string GetNameString()
             {
-                return new string(name);
+                int i;
+                for ( i = 0; i < name.Length; i++)
+                {
+                    if (name[i] == 0) break;
+                }
+                return new string(name, 0, i);
             }
 
             public uint FrameIdx { get; private set; }

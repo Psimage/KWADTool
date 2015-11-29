@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Xml;
 using KWADTool.KwadFormat;
 using ManagedSquish;
 
@@ -51,6 +53,11 @@ namespace KWADTool
 
                     switch (options.ExportType)
                     {
+                        case ExportType.Anims:
+                            ExtractTextures(kwad, options.Output);
+                            ExtractAnims(kwad, options.Output);
+                            break;
+
                         case ExportType.Textures:
                             ExtractTextures(kwad, options.Output);
                             break;
@@ -79,6 +86,175 @@ namespace KWADTool
             }
 
             return 0;
+        }
+
+        private static void ExtractAnims(KWAD kwad, string outputPath)
+        {
+            var animBundleList = (from aliasInfo in kwad.GetAliasInfoList()
+                                 where kwad.GetResourceInfoList()[(int)aliasInfo.ResourceIdx].GetType().SequenceEqual(KLEIAnimation.KLEI_TYPE)
+                                  select new
+                                  {
+                                      name = Path.GetFileNameWithoutExtension(aliasInfo.AliasPath.GetString()),
+                                      path = Path.GetDirectoryName(aliasInfo.AliasPath.GetString()),
+                                      animDef = kwad.GetResourceAt<KLEIAnimation>((int)aliasInfo.ResourceIdx),
+                                      animBld = kwad.GetResourceByAlias<KLEIBuild>(Path.ChangeExtension(aliasInfo.AliasPath.GetString(), ".abld"))
+                                      //namedTextureList = (from innerAliasInfo in kwad.GetAliasInfoList()
+                                      //      where kwad.GetResourceInfoList()[(int) innerAliasInfo.ResourceIdx].GetType().SequenceEqual(KLEITexture.KLEI_TYPE) &&
+                                      //            // ReSharper disable once PossibleNullReferenceException
+                                      //            Path.GetDirectoryName(innerAliasInfo.AliasPath.GetString()).Equals(
+                                      //            Path.GetDirectoryName(Path.Combine(Path.ChangeExtension(aliasInfo.AliasPath.GetString(), ".anim"), "dummy")),
+                                      //            //GetDirectoryName has a side effect of changing separator character.
+                                      //            //That is why it is used on a second path to effect both.
+                                      //            StringComparison.InvariantCultureIgnoreCase)
+                                      //      select new
+                                      //      {
+                                      //          name = Path.GetFileName(innerAliasInfo.AliasPath.GetString()), 
+                                      //          texture = kwad.GetResourceAt<KLEITexture>((int) innerAliasInfo.ResourceIdx)
+                                      //      }).ToList()
+                                  }).ToList();
+
+            Console.WriteLine("Extracting {0} animation bundles...", animBundleList.Count);
+
+            foreach (var animBundle in animBundleList)
+            {
+                var tempOutputPath = Path.Combine(Path.GetTempPath(), animBundle.name);
+                if (!string.IsNullOrWhiteSpace(tempOutputPath))
+                {
+                    Directory.CreateDirectory(tempOutputPath);
+                }
+                
+                if (animBundle.animBld != null)
+                {
+                    ExtractAnimationBuild(kwad, animBundle.animBld, tempOutputPath, outputPath);
+                }
+            }
+        }
+
+        private static void ExtractAnimationBuild(KWAD kwad, KLEIBuild animBld, string outputPath, string extractionOutputPath)
+        {
+            if (animBld == null)
+            {
+                throw new ArgumentNullException("animBld");
+            }
+
+            Console.WriteLine("\tAnimation build \"{0}\":", animBld.Name.GetString());
+
+            XmlDocument buildXml = new XmlDocument();
+            XmlElement buildElement = buildXml.CreateElement("Build");
+            buildElement.SetAttribute("name", animBld.Name.GetString());
+            buildXml.AppendChild(buildElement);
+
+            foreach (var symbol in animBld.GetSymbols())
+            {
+                Console.WriteLine("\t\tSymbol \"{0}\":", symbol.GetNameString());
+
+                XmlElement symbolElement = buildXml.CreateElement("Symbol");
+                symbolElement.SetAttribute("name", symbol.GetNameString());
+
+                uint frameNum = 0;
+                for (var frameIdx = (int) symbol.FrameIdx; frameIdx < symbol.FrameIdx+symbol.FrameCount; frameIdx++)
+                {
+                    Console.WriteLine("\t\t\tFrame {0}", frameIdx);
+
+                    var frame = animBld.GetSymbolFrames()[frameIdx];
+
+                    //Some frames have no references to the actual model.
+                    if (frame.ModelResourceIdx == uint.MaxValue)
+                    {
+                        Console.WriteLine("\t\t\tSkipping Frame {0}: Model reference not found", frameIdx);
+                        frameNum++;
+                        continue;
+                    }
+
+                    XmlElement symbolFrameElement = buildXml.CreateElement("Frame");
+
+                    symbolFrameElement.SetAttribute("framenum", frameNum.ToString());
+                    symbolFrameElement.SetAttribute("duration", "1");
+
+                    var model = kwad.GetResourceAt<KLEIModel>((int) frame.ModelResourceIdx);
+
+                    var leftOffset = 0;
+                    var topOffset = 0;
+
+                    //Some meshes have 0 vertex count
+                    if (model.Mesh.VertexCount > 1)
+                    {
+                        leftOffset = (int)model.Mesh.GetVertices()[0].X;
+                        topOffset = (int)model.Mesh.GetVertices()[0].Y;                        
+                    }
+
+                    var imageRelativePath = kwad.GetAliasInfoList().First(aliasInfo => aliasInfo.ResourceIdx == model.TextureResourceIdx).AliasPath.GetString();
+                    var imageFullPath = Path.GetFullPath(Path.Combine(extractionOutputPath, imageRelativePath.TrimStart(@"\/".ToCharArray())));
+                    var baseframeImageName = Path.GetFileNameWithoutExtension(imageRelativePath);
+                    var frameImageName = baseframeImageName;
+
+                    int frameImageWidth;
+                    int frameImageHeight;
+
+                    using (var textureImage = Image.FromFile(imageFullPath))
+                    {
+                        frameImageWidth = ((textureImage.Width % 2) == 0 ? textureImage.Width : (textureImage.Width + 1)) + leftOffset * 2;
+                        frameImageHeight = ((textureImage.Height % 2) == 0 ? textureImage.Height : (textureImage.Height + 1)) + topOffset * 2;
+                        
+                        using (var bitmap = new Bitmap(frameImageWidth, frameImageHeight, PixelFormat.Format32bppArgb))
+                        {
+                            bitmap.MakeTransparent();
+                            using (var graphics = Graphics.FromImage(bitmap))
+                            {
+                                graphics.DrawImage(textureImage, leftOffset, topOffset);
+                            }
+
+                            int imagePostfix = 1;
+                            do
+                            {
+                                var frameImagePath = Path.GetFullPath(Path.Combine(outputPath, frameImageName + ".png"));
+                            
+                                if (File.Exists(frameImagePath))
+                                {
+                                    using (var img = Image.FromFile(frameImagePath))
+                                    {
+                                        if (img.Width == frameImageWidth && img.Height == frameImageHeight)
+                                        {
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            frameImageName = baseframeImageName + "-" + imagePostfix;
+                                            imagePostfix++;
+                                        }
+                                    }
+
+                                }
+                                else
+                                {
+                                    bitmap.Save(frameImagePath, ImageFormat.Png);
+                                    break;
+                                }
+                            } while (true);
+                        }
+                    }
+
+                    symbolFrameElement.SetAttribute("image", frameImageName);
+                    symbolFrameElement.SetAttribute("w", frameImageWidth.ToString());
+                    symbolFrameElement.SetAttribute("h", frameImageHeight.ToString());
+
+                    symbolFrameElement.SetAttribute("x", (frame.Affine3D.GetTx() + (float)frameImageWidth / 2).ToString(CultureInfo.InvariantCulture));
+                    symbolFrameElement.SetAttribute("y", (frame.Affine3D.GetTy() + (float)frameImageHeight / 2).ToString(CultureInfo.InvariantCulture));
+
+                    symbolElement.AppendChild(symbolFrameElement);
+                    frameNum++;
+                }
+
+                buildElement.AppendChild(symbolElement);
+            }
+
+            buildXml.Save(Path.Combine(outputPath, "build.xml"));
+
+            var groupedSymbolFrames = animBld.GetSymbolFrames().GroupBy(symbolFrame => symbolFrame.ModelResourceIdx);
+            foreach (var groupedSymbolFrame in groupedSymbolFrames)
+            {
+                //groupedSymbolFrame.
+            }
         }
 
         private static void ExtractBlobs(KWAD kwad, string outputPath)

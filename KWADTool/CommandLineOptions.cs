@@ -5,6 +5,7 @@ namespace KWADTool
 {
     public enum ExportType
     {
+        Anims,
         Textures,
         Blobs,
         All
@@ -12,7 +13,7 @@ namespace KWADTool
 
     public class CommandLineOptions
     {
-        [Option('e', "extract", HelpText = "Extract resources. Valid types are Textures|Blobs|All (case insensitive).", MetaValue = "<type>",
+        [Option('e', "extract", HelpText = "Extract resources. Valid types are Anims|Textures|Blobs|All (case insensitive).", MetaValue = "<type>",
             DefaultValue = ExportType.All)]
         public ExportType ExportType { get; set; }
 
