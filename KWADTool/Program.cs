@@ -126,6 +126,7 @@ namespace KWADTool
                 if (animBundle.animBld != null)
                 {
                     ExtractAnimationBuild(kwad, animBundle.animBld, tempOutputPath, outputPath);
+                    //ZipFile.CreateFromDirectory(tempOutputPath, Path.Combine(Path.GetFullPath(outputPath), animBundle.path, animBundle.name + ".anmbdl"));
                 }
             }
         }
@@ -249,12 +250,6 @@ namespace KWADTool
             }
 
             buildXml.Save(Path.Combine(outputPath, "build.xml"));
-
-            var groupedSymbolFrames = animBld.GetSymbolFrames().GroupBy(symbolFrame => symbolFrame.ModelResourceIdx);
-            foreach (var groupedSymbolFrame in groupedSymbolFrames)
-            {
-                //groupedSymbolFrame.
-            }
         }
 
         private static void ExtractBlobs(KWAD kwad, string outputPath)
