@@ -54,8 +54,14 @@ namespace KWADTool
                     switch (options.ExportType)
                     {
                         case ExportType.Anims:
-                            ExtractTextures(kwad, options.Output);
-                            ExtractAnims(kwad, options.Output);
+                            var tempOutputPath = Path.Combine(Path.GetTempPath(), Path.GetFileName(options.Input + ".d"));
+                            if (!string.IsNullOrWhiteSpace(tempOutputPath))
+                            {
+                                Directory.CreateDirectory(tempOutputPath);
+                            }
+                            ExtractTextures(kwad, tempOutputPath);
+                            ExtractAnims(kwad, options.Output, tempOutputPath);
+                            Directory.Delete(tempOutputPath, true);
                             break;
 
                         case ExportType.Textures:
@@ -88,7 +94,7 @@ namespace KWADTool
             return 0;
         }
 
-        private static void ExtractAnims(KWAD kwad, string outputPath)
+        private static void ExtractAnims(KWAD kwad, string outputBasePath, string texturesPath)
         {
             var animBundleList = (from aliasInfo in kwad.GetAliasInfoList()
                                  where kwad.GetResourceInfoList()[(int)aliasInfo.ResourceIdx].GetType().SequenceEqual(KLEIAnimation.KLEI_TYPE)
@@ -117,21 +123,22 @@ namespace KWADTool
 
             foreach (var animBundle in animBundleList)
             {
-                var tempOutputPath = Path.Combine(Path.GetTempPath(), animBundle.name);
-                if (!string.IsNullOrWhiteSpace(tempOutputPath))
+                //TODO: log any issues for a current animBundle to a corresponding log.txt file in that animBundle directory
+                var animBuildOutputPath = Path.Combine(outputBasePath, animBundle.path, animBundle.name + ".anim");
+                if (!string.IsNullOrWhiteSpace(animBuildOutputPath))
                 {
-                    Directory.CreateDirectory(tempOutputPath);
+                    Directory.CreateDirectory(animBuildOutputPath);
                 }
                 
                 if (animBundle.animBld != null)
                 {
-                    ExtractAnimationBuild(kwad, animBundle.animBld, tempOutputPath, outputPath);
+                    ExtractAnimationBuild(kwad, animBundle.animBld, animBuildOutputPath, texturesPath);
                     //ZipFile.CreateFromDirectory(tempOutputPath, Path.Combine(Path.GetFullPath(outputPath), animBundle.path, animBundle.name + ".anmbdl"));
                 }
             }
         }
 
-        private static void ExtractAnimationBuild(KWAD kwad, KLEIBuild animBld, string outputPath, string extractionOutputPath)
+        private static void ExtractAnimationBuild(KWAD kwad, KLEIBuild animBld, string outputPath, string texturesPath)
         {
             if (animBld == null)
             {
@@ -177,15 +184,23 @@ namespace KWADTool
                     var leftOffset = 0;
                     var topOffset = 0;
 
-                    //Some meshes have 0 vertex count
-                    if (model.Mesh.VertexCount > 1)
+                    //We only care about meshes that are "quads"
+                    if (model.Mesh.VertexCount == 4)
                     {
-                        leftOffset = (int)model.Mesh.GetVertices()[0].X;
-                        topOffset = (int)model.Mesh.GetVertices()[0].Y;                        
+                        var vertecies = model.Mesh.GetVertices();
+                        if (IsRectangle(vertecies[0].X, vertecies[0].Y,
+                            vertecies[1].X, vertecies[1].Y,
+                            vertecies[2].X, vertecies[2].Y,
+                            vertecies[3].X, vertecies[3].Y))
+                        {
+                            //Since we already know it's a rectangle it is equivalent to getting that info from a top left vertex
+                            leftOffset = (int)vertecies.Min(vertex => vertex.X);
+                            topOffset = (int)vertecies.Min(vertex => vertex.Y); 
+                        }                   
                     }
 
                     var imageRelativePath = kwad.GetAliasInfoList().First(aliasInfo => aliasInfo.ResourceIdx == model.TextureResourceIdx).AliasPath.GetString();
-                    var imageFullPath = Path.GetFullPath(Path.Combine(extractionOutputPath, imageRelativePath.TrimStart(@"\/".ToCharArray())));
+                    var imageFullPath = Path.GetFullPath(Path.Combine(texturesPath, imageRelativePath.TrimStart(@"\/".ToCharArray())));
                     var baseframeImageName = Path.GetFileNameWithoutExtension(imageRelativePath);
                     var frameImageName = baseframeImageName;
 
@@ -380,6 +395,29 @@ namespace KWADTool
                 decompressMipmap = memoryStream.ToArray();
             }
             return decompressMipmap;
+        }
+
+        //http://stackoverflow.com/a/2304031
+        //KWAD model's vertex position stored as a float but the values are integers so comparison should not be a problem
+        //Can have flaws when used in other context
+        //TODO: Do a simpler implementation just for our context
+        private static bool IsRectangle(float x1, float y1,
+                 float x2, float y2,
+                 float x3, float y3,
+                 float x4, float y4)
+        {
+            double cx, cy;
+            double dd1, dd2, dd3, dd4;
+
+            cx = (x1 + x2 + x3 + x4) / 4;
+            cy = (y1 + y2 + y3 + y4) / 4;
+
+            dd1 = Math.Pow(cx - x1, 2) + Math.Pow(cy - y1, 2);
+            dd2 = Math.Pow(cx - x2, 2) + Math.Pow(cy - y2, 2);
+            dd3 = Math.Pow(cx - x3, 2) + Math.Pow(cy - y3, 2);
+            dd4 = Math.Pow(cx - x4, 2) + Math.Pow(cy - y4, 2);
+
+            return dd1 == dd2 && dd1 == dd3 && dd1 == dd4;
         }
     }
 }
