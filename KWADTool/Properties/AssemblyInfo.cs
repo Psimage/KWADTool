@@ -10,7 +10,7 @@ using CommandLine;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("KWADTool")]
-[assembly: AssemblyCopyright("Copyright (C) 2015 Yaroslav Bugaev\n")]
+[assembly: AssemblyCopyright("Copyright (C) 2016 Yaroslav Bugaev\n")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -34,11 +34,11 @@ using CommandLine;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
-[assembly: AssemblyInformationalVersion("1.0.1")]
+[assembly: AssemblyInformationalVersion("1.1.0-alpha")]
 
 // from CommandLineParser.Text
 [assembly: AssemblyLicense(
     "This is free software. You may redistribute copies of it under the terms of",
     "the MIT License <http://opensource.org/licenses/MIT>.\n")]
 [assembly: AssemblyUsage(
-    "Usage: KWADTool -i <kwadFile> [-e (textures|blobs|all)] [-o <outputDir>]")]
+    "Usage: KWADTool -i <kwadFile> [-e (anims|textures|blobs|all)] [-o <outputDir>]")]
