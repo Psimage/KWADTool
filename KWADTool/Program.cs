@@ -16,6 +16,14 @@ namespace KWADTool
     {
         private static int Main(string[] args)
         {
+            if (args.Length == 1)
+            {
+                if (File.Exists(args[0]))
+                {
+                    args = new string[] { "-i", args[0], "-e", "all" };
+                }
+            }
+
             var options = new CommandLineOptions();
             if (CommandLine.Parser.Default.ParseArgumentsStrict(args, options))
             {
@@ -54,14 +62,7 @@ namespace KWADTool
                     switch (options.ExportType)
                     {
                         case ExportType.Anims:
-                            var tempOutputPath = Path.Combine(Path.GetTempPath(), Path.GetFileName(options.Input + ".d"));
-                            if (!string.IsNullOrWhiteSpace(tempOutputPath))
-                            {
-                                Directory.CreateDirectory(tempOutputPath);
-                            }
-                            ExtractTextures(kwad, tempOutputPath);
-                            ExtractAnims(kwad, options.Output, tempOutputPath);
-                            Directory.Delete(tempOutputPath, true);
+                            HandleAnimCase(kwad, options);
                             break;
 
                         case ExportType.Textures:
@@ -75,6 +76,7 @@ namespace KWADTool
                         case ExportType.All:
                             ExtractTextures(kwad, options.Output);
                             ExtractBlobs(kwad, options.Output);
+                            HandleAnimCase(kwad, options);
                             break;
 
                         default:
@@ -92,6 +94,18 @@ namespace KWADTool
             }
 
             return 0;
+        }
+
+        private static void HandleAnimCase(KWAD kwad, CommandLineOptions options)
+        {
+            var tempOutputPath = Path.Combine(Path.GetTempPath(), Path.GetFileName(options.Input + ".d"));
+            if (!string.IsNullOrWhiteSpace(tempOutputPath))
+            {
+                Directory.CreateDirectory(tempOutputPath);
+            }
+            ExtractTextures(kwad, tempOutputPath);
+            ExtractAnims(kwad, options.Output, tempOutputPath);
+            Directory.Delete(tempOutputPath, true);
         }
 
         private static void ExtractAnims(KWAD kwad, string outputBasePath, string texturesPath)

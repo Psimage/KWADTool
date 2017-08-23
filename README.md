@@ -7,8 +7,11 @@ A tool to work with Invisible Inc. KWAD files
 .NET Framework 4.5
 
 ## Usage
+Drag and drop .kwad file onto the KWADTool executable or use CLI
 ```
-KWADTool -i <kwadFile> [-e (textures|blobs|all)] [-o <outputDir>]
+KWADTool <kwadFile>
+or
+KWADTool -i <kwadFile> [-e (anims|textures|blobs|all)] [-o <outputDir>]
 
   -e <type>, --extract=<type>    (Default: All) Extract resources. Valid types
                                  are Textures|Blobs|All (case insensitive).
