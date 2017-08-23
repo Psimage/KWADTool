@@ -116,7 +116,7 @@ namespace KWADTool
                                   {
                                       name = Path.GetFileNameWithoutExtension(aliasInfo.AliasPath.GetString()),
                                       path = Path.GetDirectoryName(aliasInfo.AliasPath.GetString()),
-                                      animDef = kwad.GetResourceAt<KLEIAnimation>((int)aliasInfo.ResourceIdx),
+                                      //animDef = kwad.GetResourceAt<KLEIAnimation>((int)aliasInfo.ResourceIdx),
                                       animBld = kwad.GetResourceByAlias<KLEIBuild>(Path.ChangeExtension(aliasInfo.AliasPath.GetString(), ".abld"))
                                       //namedTextureList = (from innerAliasInfo in kwad.GetAliasInfoList()
                                       //      where kwad.GetResourceInfoList()[(int) innerAliasInfo.ResourceIdx].GetType().SequenceEqual(KLEITexture.KLEI_TYPE) &&

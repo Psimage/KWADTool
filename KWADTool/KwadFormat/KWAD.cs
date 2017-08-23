@@ -19,11 +19,6 @@ namespace KWADTool.KwadFormat
         public uint SlabCount { get; private set; }
         public int Version { get; private set; }
 
-        private ResourceInfo CreateResourceInfo(BinaryReader reader)
-        {
-            return Version == PACKAGE_VERSION_1 ? ResourceInfo.CreateFromKWAD1(reader) : new ResourceInfo(reader);
-        }
-
         private readonly List<ResourceInfo> resourceInfoList = new List<ResourceInfo>();
 
         public IReadOnlyList<ResourceInfo> GetResourceInfoList()
@@ -61,7 +56,8 @@ namespace KWADTool.KwadFormat
             var resouceInfoListCount = reader.ReadUInt32();
             for (int i = 0; i < resouceInfoListCount; i++)
             {
-                resourceInfoList.Add(CreateResourceInfo(reader));
+                var resourceInfo = Version == PACKAGE_VERSION_1 ? ResourceInfo.CreateFromKWAD1(reader) : new ResourceInfo(reader);
+                resourceInfoList.Add(resourceInfo);
             }
 
             var aliasInfoListCount = reader.ReadUInt32();
@@ -73,15 +69,34 @@ namespace KWADTool.KwadFormat
             resourceList = resourceInfoList.Select(resInfo =>
             {
                 reader.BaseStream.Seek(resInfo.Offset, SeekOrigin.Begin);
-                if (Version == PACKAGE_VERSION_1 && resInfo.GetType().SequenceEqual(KLEISurface.KLEI_TYPE))
-                {
-                    return KLEISurface.CreateFromKWAD1(reader);
-                }
 
-                return KLEIResource.From(resInfo.GetType(), reader);
+                try
+                {
+                    if (Version == PACKAGE_VERSION_1)
+                    {
+                        if (resInfo.GetType().SequenceEqual(KLEISurface.KLEI_TYPE))
+                        {
+                            return KLEISurface.CreateFromKWAD1(reader);
+                        }
+                        // Do not parse animation types since thay have a lot of differences with KWAD version 2
+                        else if (resInfo.GetType().SequenceEqual(KLEIAnimation.KLEI_TYPE))
+                        {
+                            return null;
+                        }
+                    }
+
+                    return KLEIResource.From(resInfo.GetType(), reader);
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("WARN: Failed to parse resource of type {0} at offset {1:X}",
+                        Encoding.ASCII.GetString(resInfo.GetType()), resInfo.Offset);
+                    return null;
+                }
             }).ToList();
         }
 
+        /// <returns>Can return NULL in cases where specified resource at index was not parsed or had parsing errors</returns>
         public T GetResourceAt<T>(int idx) where T : KLEIResource
         {
             return (T) resourceList[idx];
