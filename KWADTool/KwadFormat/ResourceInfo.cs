@@ -21,12 +21,32 @@ namespace KWADTool.KwadFormat
             type = reader.ReadBytes(4);
         }
 
-        public ResourceInfo(uint slabIdx, uint size, uint offset, byte[] type)
+        public ResourceInfo(byte[] type, uint slabIdx, uint size, uint offset)
         {
             SlabIdx = slabIdx;
             Size = size;
             Offset = offset;
-            this.type = (byte[])type.Clone();
+            this.type = (byte[]) type.Clone();
+        }
+
+        /// <summary>
+        /// Create ResourceInfo from KWAD Package v1
+        /// </summary>
+        public static ResourceInfo CreateFromKWAD1(BinaryReader reader)
+        {
+            var slabIdx = reader.ReadUInt32();
+            var size = reader.ReadUInt32();
+            var offset = reader.ReadUInt32();
+
+            var oldPos = reader.BaseStream.Position;
+            // Resource signature has prefix "KLEI" (KLEITEX1, KLEISRF1, ...) and is 8 bytes long.
+            // "type" field of ResourceInfo is only 4 bytes long.
+            // That is why we only use last 4 bytes of Resource Signature.
+            reader.BaseStream.Seek(offset + 4, SeekOrigin.Begin);
+            var type = reader.ReadBytes(4);
+            reader.BaseStream.Seek(oldPos, SeekOrigin.Begin);
+
+            return new ResourceInfo(type, slabIdx, size, offset);
         }
     }
 }

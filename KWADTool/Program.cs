@@ -314,7 +314,7 @@ namespace KWADTool
 
                 var surface = kwad.GetResourceAt<KLEISurface>((int) surfaceGroup.Key);
                 var mipmap = surface.GetMipmaps()[0];
-                var imageData = DecompressMipmap(mipmap);
+                var imageData = mipmap.CompressedSize > 0 ? DecompressMipmap(mipmap) : mipmap.GetData();
 
                 if (surface.IsDXTCompressed)
                 {
@@ -382,19 +382,19 @@ namespace KWADTool
 
         private static byte[] DecompressMipmap(KLEISurface.Mipmap mipmap)
         {
-            var compressedSurface = mipmap.GetCompressedData();
-            byte[] decompressMipmap;
+            var compressedMipmapData = mipmap.GetData();
+            byte[] decompressedMipmapData;
             using (var memoryStream = new MemoryStream((int) mipmap.Size))
             {
-                using (var compressedSurfaceStream = new MemoryStream(compressedSurface, 2, compressedSurface.Length - 2))
-                using (var decompressionStream = new DeflateStream(compressedSurfaceStream, CompressionMode.Decompress))
+                using (var compressedMipmapDataStream = new MemoryStream(compressedMipmapData, 2, compressedMipmapData.Length - 2))
+                using (var decompressionStream = new DeflateStream(compressedMipmapDataStream, CompressionMode.Decompress))
                 {
                     decompressionStream.CopyTo(memoryStream);
                 }
 
-                decompressMipmap = memoryStream.ToArray();
+                decompressedMipmapData = memoryStream.ToArray();
             }
-            return decompressMipmap;
+            return decompressedMipmapData;
         }
 
         //http://stackoverflow.com/a/2304031
