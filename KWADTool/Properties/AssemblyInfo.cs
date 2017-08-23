@@ -10,7 +10,7 @@ using CommandLine;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("KWADTool")]
-[assembly: AssemblyCopyright("Copyright (C) 2016 Yaroslav Bugaev\n")]
+[assembly: AssemblyCopyright("Copyright (C) 2017 Yaroslav Bugaev\n")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -34,7 +34,7 @@ using CommandLine;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
-[assembly: AssemblyInformationalVersion("1.1.0")]
+[assembly: AssemblyInformationalVersion("1.2.0")]
 
 // from CommandLineParser.Text
 [assembly: AssemblyLicense(
