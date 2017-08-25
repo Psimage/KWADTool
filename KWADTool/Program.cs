@@ -400,6 +400,11 @@ namespace KWADTool
             byte[] decompressedMipmapData;
             using (var memoryStream = new MemoryStream((int) mipmap.Size))
             {
+                /* https://stackoverflow.com/a/21544269
+                 * "The first two bytes of a raw ZLib stream provide details about the type of compression used.
+                 * Microsoft's DeflateStream class in System.Io.Compression doesn't understand these."
+                 * FYI: ZLib header usually starts with "78 XX"
+                 */
                 using (var compressedMipmapDataStream = new MemoryStream(compressedMipmapData, 2, compressedMipmapData.Length - 2))
                 using (var decompressionStream = new DeflateStream(compressedMipmapDataStream, CompressionMode.Decompress))
                 {
