@@ -120,8 +120,21 @@ namespace KWADTool.KwadFormat
 
             var openGLType = reader.ReadUInt32();
             var openGLStorageType = reader.ReadUInt32();
+            // Oldest EA version of KWAD1 file is missing openGLStorageType field.
+            // We check for that based on the value we read.
+            // If its 0 or 1 - it is very likely that this is the value of 
+            // the next "isDXTCompressed" field (openGLStorageType is missing)
+            uint compressed = 0;
+            if (openGLStorageType == 0 || openGLStorageType == 1)
+            {
+                compressed = openGLStorageType;
+                openGLStorageType = openGLType;
+            }
+            else
+            {
+                compressed = reader.ReadUInt32();
+            }
 
-            var compressed = reader.ReadUInt32();
             var isDXTCompressed = compressed == 1;
 
             var mipmapCount = reader.ReadUInt32();
