@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Globalization;
@@ -14,6 +15,7 @@ namespace KWADTool
 {
     public static class Program
     {
+        private static Dictionary<uint, string> symbolNames = new Dictionary<uint, string>();
         private static int Main(string[] args)
         {
             if (args.Length == 1)
@@ -116,24 +118,23 @@ namespace KWADTool
                                   {
                                       name = Path.GetFileNameWithoutExtension(aliasInfo.AliasPath.GetString()),
                                       path = Path.GetDirectoryName(aliasInfo.AliasPath.GetString()),
-                                      //animDef = kwad.GetResourceAt<KLEIAnimation>((int)aliasInfo.ResourceIdx),
+                                      animDef = kwad.GetResourceAt<KLEIAnimation>((int)aliasInfo.ResourceIdx),
                                       animBld = kwad.GetResourceByAlias<KLEIBuild>(Path.ChangeExtension(aliasInfo.AliasPath.GetString(), ".abld"))
-                                      //namedTextureList = (from innerAliasInfo in kwad.GetAliasInfoList()
-                                      //      where kwad.GetResourceInfoList()[(int) innerAliasInfo.ResourceIdx].GetType().SequenceEqual(KLEITexture.KLEI_TYPE) &&
-                                      //            // ReSharper disable once PossibleNullReferenceException
-                                      //            Path.GetDirectoryName(innerAliasInfo.AliasPath.GetString()).Equals(
-                                      //            Path.GetDirectoryName(Path.Combine(Path.ChangeExtension(aliasInfo.AliasPath.GetString(), ".anim"), "dummy")),
-                                      //            //GetDirectoryName has a side effect of changing separator character.
-                                      //            //That is why it is used on a second path to effect both.
-                                      //            StringComparison.InvariantCultureIgnoreCase)
-                                      //      select new
-                                      //      {
-                                      //          name = Path.GetFileName(innerAliasInfo.AliasPath.GetString()), 
-                                      //          texture = kwad.GetResourceAt<KLEITexture>((int) innerAliasInfo.ResourceIdx)
-                                      //      }).ToList()
                                   }).ToList();
 
             Console.WriteLine("Extracting {0} animation bundles...", animBundleList.Count);
+            int buildCount = 0;
+            int animCount = 0;
+            foreach (var animBundle in animBundleList) {
+                if (animBundle.animBld != null) {
+                    buildCount++;
+                }
+                if (animBundle.animDef != null) {
+                    animCount++;
+                }
+            }
+
+            Console.WriteLine("Extracting {0} animation builds...", buildCount);
 
             foreach (var animBundle in animBundleList)
             {
@@ -148,6 +149,21 @@ namespace KWADTool
                 {
                     ExtractAnimationBuild(kwad, animBundle.animBld, animBuildOutputPath, texturesPath);
                     //ZipFile.CreateFromDirectory(tempOutputPath, Path.Combine(Path.GetFullPath(outputPath), animBundle.path, animBundle.name + ".anmbdl"));
+                }
+            }
+
+            Console.WriteLine("Extracting {0} animation definitions...", animCount);
+
+            foreach (var animBundle in animBundleList) {
+                //TODO: log any issues for a current animBundle to a corresponding log.txt file in that animBundle directory
+                var animBuildOutputPath = Path.Combine(outputBasePath, animBundle.path, animBundle.name + ".anim");
+                if (!string.IsNullOrWhiteSpace(animBuildOutputPath)) {
+                    Directory.CreateDirectory(animBuildOutputPath);
+                }
+
+                if (animBundle.animDef != null) {
+                    Console.WriteLine(string.Format("\tAnimation Def \"{0}\"", animBundle.name + ".anim"));
+                    ExtractAnimationDef(kwad, animBundle.animDef, animBuildOutputPath);
                 }
             }
         }
@@ -165,10 +181,12 @@ namespace KWADTool
             XmlElement buildElement = buildXml.CreateElement("Build");
             buildElement.SetAttribute("name", animBld.Name.GetString());
             buildXml.AppendChild(buildElement);
+            var frames = animBld.GetSymbolFrames();
 
             foreach (var symbol in animBld.GetSymbols())
             {
                 Console.WriteLine("\t\tSymbol \"{0}\":", symbol.GetNameString());
+                symbolNames[symbol.Hash] = symbol.GetNameString();
 
                 XmlElement symbolElement = buildXml.CreateElement("Symbol");
                 symbolElement.SetAttribute("name", symbol.GetNameString());
@@ -176,9 +194,9 @@ namespace KWADTool
                 uint frameNum = 0;
                 for (var frameIdx = (int) symbol.FrameIdx; frameIdx < symbol.FrameIdx+symbol.FrameCount; frameIdx++)
                 {
-                    Console.WriteLine("\t\t\tFrame {0}", frameIdx);
+                    Console.WriteLine("\t\t\tBuild Frame {0}", frameIdx);
 
-                    var frame = animBld.GetSymbolFrames()[frameIdx];
+                    var frame = frames[frameIdx];
 
                     //Some frames have no references to the actual model.
                     if (frame.ModelResourceIdx == uint.MaxValue)
@@ -279,6 +297,182 @@ namespace KWADTool
             }
 
             buildXml.Save(Path.Combine(outputPath, "build.xml"));
+        }
+
+        private static void ExtractAnimationDef(KWAD kwad, KLEIAnimation animDef, string outputPath) {
+            if (animDef == null) {
+                throw new ArgumentNullException("animDef");
+            }
+
+            XmlDocument animsXml = new XmlDocument();
+            XmlElement animationsElement = animsXml.CreateElement("Anims");
+            animsXml.AppendChild(animationsElement);
+
+            var frames = animDef.GetFrames();
+            var instances = animDef.GetInstances();
+            var transforms = animDef.GetTransforms();
+            var colors = animDef.GetColours();
+
+            foreach (var anim in animDef.GetAnimations()) {
+                var animName = anim.GetNameString().Trim().Trim('\0');
+
+                var facingMask = anim.FacingMask;
+
+                if (facingMask != uint.MaxValue) {
+                    animName += '_';
+                    if ((facingMask & 1) != 0) {
+                        animName += "E_";
+                    }
+                    if ((facingMask & 2) != 0) {
+                        animName += "NE_";
+                    }
+                    if ((facingMask & 4) != 0) {
+                        animName += "N_";
+                    }
+                    if ((facingMask & 8) != 0) {
+                        animName += "NW_";
+                    }
+                    if ((facingMask & 16) != 0) {
+                        animName += "W_";
+                    }
+                    if ((facingMask & 32) != 0) {
+                        animName += "SW_";
+                    }
+                    if ((facingMask & 64) != 0) {
+                        animName += "S_";
+                    }
+                    if ((facingMask & 128) != 0) {
+                        animName += "SE_";
+                    }
+                }
+
+                Console.WriteLine("\t\tAnim \"{0}\":", animName);
+                XmlElement animElement = animsXml.CreateElement("anim");
+                animElement.SetAttribute("name", animName);
+                animElement.SetAttribute("root", "character"); //// Does nothing?
+                animElement.SetAttribute("numframes", anim.FrameCount.ToString());
+                animElement.SetAttribute("framerate", anim.FrameRate.ToString(CultureInfo.InvariantCulture));
+
+                for (var frameIdx = anim.FrameIdx; frameIdx < anim.FrameIdx + anim.FrameCount; frameIdx++) {
+                    Console.WriteLine("\t\t\tAnim Frame {0}", frameIdx);
+                    var frame = frames[frameIdx];
+
+                    var frameElement = animsXml.CreateElement("frame");
+                    frameElement.SetAttribute("idx", frameIdx.ToString());
+                    frameElement.SetAttribute("w", "0"); //// Does nothing?
+                    frameElement.SetAttribute("h", "0");
+                    frameElement.SetAttribute("x", "0");
+                    frameElement.SetAttribute("y", "0");
+
+                    for (var instanceIdx = frame.InstanceIdx; instanceIdx < frame.InstanceIdx + frame.InstanceCount; instanceIdx++) {
+                        var instance = instances[instanceIdx];
+                        var instanceElement = animsXml.CreateElement("element");
+
+                        // Symbol Name is hashed so look it up among the symbols we found during build extraction
+                        string symbolName;
+                        if (symbolNames.ContainsKey(instance.SymbolHash)) {
+                            symbolName = symbolNames[instance.SymbolHash];
+                        } else {
+                            symbolName = instance.SymbolHash.ToString();
+                        }
+
+                        {
+                            instanceElement.SetAttribute("name", symbolName);
+
+                            instanceElement.SetAttribute("layername", instance.FolderHash.ToString());
+                            if (instance.ParentHash == 0) {
+                                instanceElement.SetAttribute("parentname", "");
+                            } else {
+                                instanceElement.SetAttribute("parentname", instance.ParentHash.ToString());
+                            }
+                            instanceElement.SetAttribute("frame", instance.SymbolFrame.ToString());
+                            instanceElement.SetAttribute("depth", "0"); //// Does nothing?
+
+                            if (instance.TransformIdx != uint.MaxValue) {
+                                var transform = transforms[instance.TransformIdx];
+
+                                instanceElement.SetAttribute("m1_a", transform.GetA().ToString(CultureInfo.InvariantCulture));
+                                instanceElement.SetAttribute("m1_b", transform.GetB().ToString(CultureInfo.InvariantCulture));
+                                instanceElement.SetAttribute("m1_c", transform.GetC().ToString(CultureInfo.InvariantCulture));
+                                instanceElement.SetAttribute("m1_d", transform.GetD().ToString(CultureInfo.InvariantCulture));
+                                instanceElement.SetAttribute("m1_tx", transform.GetTx().ToString(CultureInfo.InvariantCulture));
+                                instanceElement.SetAttribute("m1_ty", transform.GetTy().ToString(CultureInfo.InvariantCulture));
+                            }
+
+                            if (instance.ParentTransformIdx != uint.MaxValue) {
+                                var transform = transforms[instance.ParentTransformIdx];
+
+                                instanceElement.SetAttribute("m0_a", transform.GetA().ToString(CultureInfo.InvariantCulture));
+                                instanceElement.SetAttribute("m0_b", transform.GetB().ToString(CultureInfo.InvariantCulture));
+                                instanceElement.SetAttribute("m0_c", transform.GetC().ToString(CultureInfo.InvariantCulture));
+                                instanceElement.SetAttribute("m0_d", transform.GetD().ToString(CultureInfo.InvariantCulture));
+                                instanceElement.SetAttribute("m0_tx", transform.GetTx().ToString(CultureInfo.InvariantCulture));
+                                instanceElement.SetAttribute("m0_ty", transform.GetTy().ToString(CultureInfo.InvariantCulture));
+                            }
+
+                            if (instance.CMIdx != uint.MaxValue || instance.CAIdx != uint.MaxValue) {
+                                instanceElement.SetAttribute("c_01", "0");
+                                instanceElement.SetAttribute("c_02", "0");
+                                instanceElement.SetAttribute("c_03", "0");
+
+                                instanceElement.SetAttribute("c_10", "0");
+                                instanceElement.SetAttribute("c_12", "0");
+                                instanceElement.SetAttribute("c_13", "0");
+
+                                instanceElement.SetAttribute("c_20", "0");
+                                instanceElement.SetAttribute("c_21", "0");
+                                instanceElement.SetAttribute("c_23", "0");
+
+                                instanceElement.SetAttribute("c_30", "0");
+                                instanceElement.SetAttribute("c_31", "0");
+                                instanceElement.SetAttribute("c_32", "0");
+
+                                instanceElement.SetAttribute("c_40", "0");
+                                instanceElement.SetAttribute("c_41", "0");
+                                instanceElement.SetAttribute("c_42", "0");
+                                instanceElement.SetAttribute("c_43", "0");
+                                instanceElement.SetAttribute("c_44", "1");
+
+                                if (instance.CMIdx != uint.MaxValue) {
+                                    var color = colors[instance.CMIdx];
+
+                                    instanceElement.SetAttribute("c_00", color.R.ToString(CultureInfo.InvariantCulture));
+                                    instanceElement.SetAttribute("c_11", color.G.ToString(CultureInfo.InvariantCulture));
+                                    instanceElement.SetAttribute("c_22", color.B.ToString(CultureInfo.InvariantCulture));
+                                    instanceElement.SetAttribute("c_33", color.A.ToString(CultureInfo.InvariantCulture));
+                                } else {
+                                    instanceElement.SetAttribute("c_00", "1");
+                                    instanceElement.SetAttribute("c_11", "1");
+                                    instanceElement.SetAttribute("c_22", "1");
+                                    instanceElement.SetAttribute("c_33", "1");
+                                }
+
+                                if (instance.CAIdx != uint.MaxValue) {
+                                    var color = colors[instance.CAIdx];
+
+                                    instanceElement.SetAttribute("c_04", color.R.ToString(CultureInfo.InvariantCulture));
+                                    instanceElement.SetAttribute("c_14", color.G.ToString(CultureInfo.InvariantCulture));
+                                    instanceElement.SetAttribute("c_24", color.B.ToString(CultureInfo.InvariantCulture));
+                                    instanceElement.SetAttribute("c_34", color.A.ToString(CultureInfo.InvariantCulture));
+                                } else {
+                                    instanceElement.SetAttribute("c_04", "0");
+                                    instanceElement.SetAttribute("c_14", "0");
+                                    instanceElement.SetAttribute("c_24", "0");
+                                    instanceElement.SetAttribute("c_34", "0");
+                                }
+                            }
+
+                            frameElement.AppendChild(instanceElement);
+                        }
+                    }
+
+                    animElement.AppendChild(frameElement);
+                }
+
+                animationsElement.AppendChild(animElement);
+            }
+
+            animsXml.Save(Path.Combine(outputPath, "animation.xml"));
         }
 
         private static void ExtractBlobs(KWAD kwad, string outputPath)
